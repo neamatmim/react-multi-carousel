@@ -14,9 +14,9 @@ import {
   populateSlidesOnMouseTouchMove,
   isInLeftEnd,
   isInRightEnd,
-  notEnoughChildren
+  notEnoughChildren,
 } from "./utils";
-import { CarouselInternalState, CarouselProps, stateCallBack } from "./types";
+import { CarouselInternalState, CarouselProps, StateCallBack, Direction } from "./types";
 import Dots from "./Dots";
 import { LeftArrow, RightArrow } from "./Arrows";
 import CarouselItems from "./CarouselItems";
@@ -36,18 +36,19 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
     keyBoardControl: true,
     autoPlaySpeed: 3000,
     showDots: false,
+    renderDotsOutside: false,
     minimumTouchDrag: 80,
     dotListClass: "",
     focusOnSelect: false,
     centerMode: false,
-    additionalTransfrom: 0
+    additionalTransfrom: 0,
   };
-  private readonly containerRef: React.RefObject<any>;
+  private readonly containerRef: React.RefObject<HTMLDivElement>;
   public onMove: boolean;
   public initialX: number;
   public lastX: number;
   public isAnimationAllowed: boolean;
-  public direction: string;
+  public direction: Direction;
   public autoPlay?: any;
   public isInThrottle?: boolean;
   public initialY: number;
@@ -64,7 +65,6 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       domLoaded: false,
       transform: 0,
       containerWidth: 0,
-      isSliding: false
     };
     this.onResize = this.onResize.bind(this);
     this.handleDown = this.handleDown.bind(this);
@@ -135,7 +135,7 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
         {
           clones,
           totalItems: clones.length,
-          currentSlide: forResizing ? this.state.currentSlide : initialSlide
+          currentSlide: forResizing ? this.state.currentSlide : initialSlide,
         },
         () => {
           this.correctItemsPosition(itemWidth || this.state.itemWidth);
@@ -169,7 +169,7 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       this.setState(
         {
           containerWidth,
-          itemWidth
+          itemWidth,
         },
         () => {
           if (this.props.infinite) {
@@ -197,7 +197,7 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       this.isAnimationAllowed = false;
     }
     this.setState({
-      transform: -(itemWidth * this.state.currentSlide)
+      transform: -(itemWidth * this.state.currentSlide),
     });
   }
   public onResize(value?: React.KeyboardEvent | boolean): void {
@@ -219,7 +219,7 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
   }
   public componentDidUpdate(
     { keyBoardControl, autoPlay }: CarouselProps,
-    { containerWidth, domLoaded, isSliding }: CarouselInternalState
+    { containerWidth, domLoaded }: CarouselInternalState
   ): void {
     if (
       this.containerRef &&
@@ -232,7 +232,9 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       }, this.props.transitionDuration || defaultTransitionDuration);
     }
     if (keyBoardControl && !this.props.keyBoardControl) {
-      window.removeEventListener("keyup", this.onKeyUp as React.EventHandler<any>);
+      window.removeEventListener("keyup", this.onKeyUp as React.EventHandler<
+        any
+      >);
     }
     if (autoPlay && !this.props.autoPlay && this.autoPlay) {
       clearInterval(this.autoPlay);
@@ -243,36 +245,32 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
     }
     if (this.props.infinite) {
       // this is to quickly cancel the animation and move the items position to create the infinite effects.
-      this.correctClonesPosition({ domLoaded, isSliding });
+      this.correctClonesPosition({ domLoaded });
     }
   }
   public correctClonesPosition({
     domLoaded, // this domLoaded comes from previous state, only use to tell if we are on client-side or server-side because this functin relies the dom.
-    isSliding
   }: {
     domLoaded?: boolean;
-    isSliding?: boolean;
   }): void {
     const childrenArr = React.Children.toArray(this.props.children);
     const {
       isReachingTheEnd,
       isReachingTheStart,
       nextSlide,
-      nextPosition
+      nextPosition,
     } = checkClonesPosition(this.state, childrenArr, this.props);
     if (
       // this is to prevent this gets called on the server-side.
       this.state.domLoaded &&
-      domLoaded &&
-      isSliding &&
-      !this.state.isSliding
+      domLoaded
     ) {
       if (isReachingTheEnd || isReachingTheStart) {
         this.isAnimationAllowed = false;
         setTimeout(() => {
           this.setState({
             transform: nextPosition,
-            currentSlide: nextSlide
+            currentSlide: nextSlide,
           });
         }, this.props.transitionDuration || defaultTransitionDuration);
       }
@@ -304,12 +302,10 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
     this.isAnimationAllowed = true;
     this.setState(
       {
-        isSliding: true,
         transform: nextPosition,
-        currentSlide: nextSlides
+        currentSlide: nextSlides,
       },
       () => {
-        this.setState({ isSliding: false });
         if (typeof afterChange === "function") {
           setTimeout(() => {
             afterChange(previousSlide, this.getState());
@@ -339,12 +335,10 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
     this.isAnimationAllowed = true;
     this.setState(
       {
-        isSliding: true,
         transform: nextPosition,
-        currentSlide: nextSlides
+        currentSlide: nextSlides,
       },
       () => {
-        this.setState({ isSliding: false });
         if (typeof afterChange === "function") {
           setTimeout(() => {
             afterChange(previousSlide, this.getState());
@@ -354,9 +348,13 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
     );
   }
   public componentWillUnmount(): void {
-    window.removeEventListener("resize", this.onResize as React.EventHandler<any>);
+    window.removeEventListener("resize", this.onResize as React.EventHandler<
+      any
+    >);
     if (this.props.keyBoardControl) {
-      window.removeEventListener("keyup", this.onKeyUp as React.EventHandler<any>);
+      window.removeEventListener("keyup", this.onKeyUp as React.EventHandler<
+        any
+      >);
     }
     if (this.props.autoPlay && this.autoPlay) {
       clearInterval(this.autoPlay);
@@ -395,10 +393,16 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
     ) {
       return;
     }
-    const { clientX, clientY } = (e as React.TouchEvent).touches ? (e as React.TouchEvent).touches[0] : (e as React.MouseEvent);
+    const { clientX, clientY } = (e as React.TouchEvent).touches
+      ? (e as React.TouchEvent).touches[0]
+      : (e as React.MouseEvent);
     const diffX = this.initialX - clientX;
     const diffY = this.initialY - clientY;
-    if ((e as React.TouchEvent).touches && this.autoPlay && this.props.autoPlay) {
+    if (
+      (e as React.TouchEvent).touches &&
+      this.autoPlay &&
+      this.props.autoPlay
+    ) {
       clearInterval(this.autoPlay);
       this.autoPlay = undefined;
     }
@@ -410,7 +414,7 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       const {
         direction,
         nextPosition,
-        canContinue
+        canContinue,
       } = populateSlidesOnMouseTouchMove(
         this.state,
         this.props,
@@ -496,11 +500,11 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
     this.setState(
       {
         currentSlide: slide,
-        transform: -(itemWidth * slide)
+        transform: -(itemWidth * slide),
       },
       () => {
         if (this.props.infinite) {
-          this.correctClonesPosition({ domLoaded: true, isSliding: true });
+          this.correctClonesPosition({ domLoaded: true });
         }
         if (typeof afterChange === "function") {
           setTimeout(() => {
@@ -510,11 +514,11 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       }
     );
   }
-  public getState(): stateCallBack {
+  public getState(): StateCallBack {
     return {
       ...this.state,
       onMove: this.onMove,
-      direction: this.direction
+      direction: this.direction,
     };
   }
   public renderLeftArrow(): React.ReactNode {
@@ -544,7 +548,7 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
         previous: () => this.previous(),
         next: () => this.next(),
         goToSlide: (slideIndex: number) => this.goToSlide(slideIndex),
-        carouselState: this.getState()
+        carouselState: this.getState(),
       });
     }
     return null;
@@ -581,13 +585,16 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       customTransition,
       partialVisbile,
       centerMode,
-      additionalTransfrom
+      additionalTransfrom,
+      renderDotsOutside,
+      className,
     } = this.props;
     throwError(this.state, this.props);
-    const { shouldRenderOnSSR, paritialVisibilityGutter, shouldRenderAtAll } = getInitialState(
-      this.state,
-      this.props
-    );
+    const {
+      shouldRenderOnSSR,
+      paritialVisibilityGutter,
+      shouldRenderAtAll,
+    } = getInitialState(this.state, this.props);
     const isLeftEndReach = isInLeftEnd(this.state);
     const isRightEndReach = isInRightEnd(this.state);
     const shouldShowArrows =
@@ -598,7 +605,8 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
           (this.state.deviceType &&
             removeArrowOnDeviceType.indexOf(this.state.deviceType) > -1))
       ) &&
-      !notEnoughChildren(this.state, this.props) && shouldRenderAtAll;
+      !notEnoughChildren(this.state, this.props) &&
+      shouldRenderAtAll;
     const disableLeftArrow = !infinite && isLeftEndReach;
     const disableRightArrow = !infinite && isRightEndReach;
     // this lib supports showing next set of items paritially as well as center mode which shows both.
@@ -612,37 +620,40 @@ class Carousel extends React.Component<CarouselProps, CarouselInternalState> {
       ? getTransformForCenterMode(this.state, this.props)
       : this.state.transform;
     return (
-      <div
-        className={`react-multi-carousel-list ${containerClass}`}
-        ref={this.containerRef}
-      >
-        <ul
-          className={`react-multi-carousel-track ${sliderClass}`}
-          // @ts-ignore
-          style={{
-            transition: this.isAnimationAllowed
-              ? customTransition || defaultTransition
-              : "none",
-            overflow: shouldRenderOnSSR ? "hidden" : "unset",
-            transform: `translate3d(${currentTransform +
-              additionalTransfrom!}px,0,0)`
-          }}
-          onMouseMove={this.handleMove}
-          onMouseDown={this.handleDown}
-          onMouseUp={this.handleOut}
-          onMouseEnter={this.handleEnter}
-          onMouseLeave={this.handleOut}
-          onTouchStart={this.handleDown}
-          onTouchMove={this.handleMove}
-          onTouchEnd={this.handleOut}
+      <>
+        <div
+          className={`react-multi-carousel-list ${containerClass} ${className}`}
+          ref={this.containerRef}
         >
-          {this.renderCarouselItems()}
-        </ul>
-        {shouldShowArrows && !disableLeftArrow && this.renderLeftArrow()}
-        {shouldShowArrows && !disableRightArrow && this.renderRightArrow()}
-        {shouldRenderAtAll && this.renderButtonGroups()}
-        {shouldRenderAtAll && this.renderDotsList()}
-      </div>
+          <ul
+            className={`react-multi-carousel-track ${sliderClass}`}
+            // @ts-ignore
+            style={{
+              transition: this.isAnimationAllowed
+                ? customTransition || defaultTransition
+                : "none",
+              overflow: shouldRenderOnSSR ? "hidden" : "unset",
+              transform: `translate3d(${currentTransform +
+                additionalTransfrom!}px,0,0)`,
+            }}
+            onMouseMove={this.handleMove}
+            onMouseDown={this.handleDown}
+            onMouseUp={this.handleOut}
+            onMouseEnter={this.handleEnter}
+            onMouseLeave={this.handleOut}
+            onTouchStart={this.handleDown}
+            onTouchMove={this.handleMove}
+            onTouchEnd={this.handleOut}
+          >
+            {this.renderCarouselItems()}
+          </ul>
+          {shouldShowArrows && !disableLeftArrow && this.renderLeftArrow()}
+          {shouldShowArrows && !disableRightArrow && this.renderRightArrow()}
+          {shouldRenderAtAll && this.renderButtonGroups()}
+          {shouldRenderAtAll && !renderDotsOutside && this.renderDotsList()}
+        </div>
+        {shouldRenderAtAll && renderDotsOutside && this.renderDotsList()}
+      </>
     );
   }
 }

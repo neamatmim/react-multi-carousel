@@ -4,6 +4,7 @@ export interface responsiveType {
     breakpoint: { max: number; min: number };
     items: number;
     paritialVisibilityGutter?: number;
+    slidesToSlide?: number;
   };
 }
 export interface CarouselProps {
@@ -22,17 +23,19 @@ export interface CarouselProps {
   customButtonGroup?: React.ReactElement<any> | null;
   infinite?: boolean;
   minimumTouchDrag?: number; // default 50px. The amount of distance to drag / swipe in order to move to the next slide.
-  afterChange?: (previousSlide: number, state: stateCallBack) => void; // Change callback after sliding everytime. `(previousSlide, currentState) => ...`
-  beforeChange?: (nextSlide: number, state: stateCallBack) => void; // Change callback before sliding everytime. `(previousSlide, currentState) => ...`
+  afterChange?: (previousSlide: number, state: StateCallBack) => void; // Change callback after sliding everytime. `(previousSlide, currentState) => ...`
+  beforeChange?: (nextSlide: number, state: StateCallBack) => void; // Change callback before sliding everytime. `(previousSlide, currentState) => ...`
   sliderClass?: string; // Use this to style your own track list.
   itemClass?: string; // Use this to style your own Carousel item. For example add padding-left and padding-right
   containerClass?: string; // Use this to style the whole container. For example add padding to allow the "dots" or "arrows" to go to other places without being overflown.
+  className?: string;  // Use this to style the whole container with styled-components
   dotListClass?: string; // Use this to style the dot list.
   keyBoardControl?: boolean;
   centerMode?: boolean; // show previous and next set of items paritially
   autoPlay?: boolean;
   autoPlaySpeed?: number; // default 3000ms
   showDots?: boolean;
+  renderDotsOutside?: boolean; // show dots outside of the container for custom styling.
   // Show next/previous item partially, if its right, only show the next item partially, else show both
   // partialVisbile has to be used in conjunction with the responsive props, details are in documentation.
   // it shows the next set of items partially, different from centerMode as it shows both.
@@ -46,28 +49,26 @@ export interface CarouselProps {
   additionalTransfrom?: number; // this is only used if you want to add additional transfrom to the current transform
 }
 
-
-
-export interface stateCallBack extends CarouselInternalState {
+export interface StateCallBack extends CarouselInternalState {
   onMove: boolean;
-  direction: string | undefined;
+  direction: Direction;
 }
-
+export type Direction = "left" | "right" | "" | undefined;
 export interface buttonGroupProps {
   previous?: () => void;
   next?: () => void;
-  goToSlide?: (index:number) => void;
-  carouselState?: stateCallBack;
+  goToSlide?: (index: number) => void;
+  carouselState?: StateCallBack;
 }
 export interface ArrowProps {
   onClick?: () => void;
-  carouselState?: stateCallBack;
+  carouselState?: StateCallBack;
 }
 export interface DotProps {
   index?: number;
   active?: boolean;
   onClick?: () => void;
-  carouselState?: stateCallBack;
+  carouselState?: StateCallBack;
 }
 
 export interface CarouselInternalState {
@@ -83,4 +84,19 @@ export interface CarouselInternalState {
   clones: any[];
 }
 
-export default class Carousel extends React.PureComponent<CarouselProps> {}
+export default class Carousel extends React.PureComponent<CarouselProps> {
+  previous: (slidesHavePassed: number) => void;
+  next: (slidesHavePassed: number) => void;
+  goToSlide: (slide: number) => void;
+  state: CarouselInternalState;
+  setClones: (
+    slidesToShow: number,
+    itemWidth?: number,
+    forResizing?: boolean
+  ) => void; // reset carousel in infinite mode.
+  setItemsToShow: (shouldCorrectItemPosition?: boolean) => void; // reset carousel in non-infinite mode.
+  correctClonesPosition: ({ domLoaded }: { domLoaded: boolean }) => void;
+  onMove: boolean;
+  direction: Direction;
+  containerRef: React.RefObject<HTMLDivElement>;
+}

@@ -1,11 +1,21 @@
-# react-multi-carousel
+# react-multi-carousel 👋
 
 Production-ready, lightweight fully customizable React carousel component that rocks supports multiple items and SSR(Server-side rendering) with typescript.
 
 Don't forget to leave a star if this project help you reduce time to develop.
 
+[![Package Quality](https://npm.packagequality.com/shield/react-multi-carousel.svg)](https://packagequality.com/#?package=react-multi-carousel)
 [![npm version](https://badge.fury.io/js/react-multi-carousel.svg)](https://www.npmjs.com/package/react-multi-carousel)
 [![Build Status](https://api.travis-ci.org/YIZHUANG/react-multi-carousel.svg?branch=master)](https://travis-ci.org/YIZHUANG/react-multi-carousel)
+<a href="https://w3js.com/react-multi-carousel">
+<img alt="Documentation" src="https://img.shields.io/badge/documentation-yes-brightgreen.svg" target="_blank" />
+</a>
+<a href="https://github.com/YIZHUANG/react-multi-carousel/graphs/commit-activity">
+<img alt="Maintenance" src="https://img.shields.io/badge/Maintained%3F-yes-green.svg" target="_blank" />
+</a>
+<a href="https://github.com/YIZHUANG/react-multi-carousel/blob/master/LICENSE">
+<img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-yellow.svg" target="_blank" />
+</a>
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FYIZHUANG%2Freact-multi-carousel.svg?type=shield)](https://app.fossa.io/projects/git%2Bgithub.com%2FYIZHUANG%2Freact-multi-carousel?ref=badge_shield)
 [![David Dependancy Status](https://david-dm.org/YIZHUANG/react-multi-carousel.svg)](https://david-dm.org/YIZHUANG/react-multi-carousel)
 [![Known Vulnerabilities](https://snyk.io/test/github/YIZHUANG/react-multi-carousel/badge.svg?targetFile=package.json)](https://snyk.io/test/github/YIZHUANG/react-multi-carousel?targetFile=package.json)
@@ -14,10 +24,20 @@ Don't forget to leave a star if this project help you reduce time to develop.
 
 ![demo](https://media.giphy.com/media/3octyw2XELzfaplNUm/giphy.gif)
 
+### Breaking changes in 2.0.
+
+This only concerns the people who are using the dots.
+
+- The behavior of the dot mode now has been changed and improved to be responsive and all the edge cases are handled nicely. For a better look please refer to the demo in the [documentation](https://w3js.com/react-multi-carousel).
+- slidesToSlide can now be added for each break-point in the responsive props if specified, otherwise the this.props.slidesToSlide is used by default. New usage can be found either below or [here](https://github.com/YIZHUANG/react-multi-carousel/blob/master/src/types.ts).
+
+This documentation of this change can also be found at the [release log](https://github.com/YIZHUANG/react-multi-carousel/releases/tag/2.0)
+
 ### Features.
 
 - Server-side rendering
 - Infinite mode
+- Dot mode
 - Custom animation
 - AutoPlay mode
 - Auto play interval
@@ -36,11 +56,16 @@ Don't forget to leave a star if this project help you reduce time to develop.
 - Show next/previous set of items partially
 
 ### Shoutouts 🙏
+
 <img src="/browserstack-logo-600x315.png" height="80" title="BrowserStack Logo" alt="BrowserStack Logo" />
 
 Big thanks to [BrowserStack](https://www.browserstack.com) for letting the maintainers use their service to debug browser issues.
 
 ## [Documentation](https://w3js.com/react-multi-carousel/)
+
+## Show your support
+
+Give a ⭐️ if this project helped you!
 
 ## Other important links.
 
@@ -79,12 +104,6 @@ import 'react-multi-carousel/lib/styles.css';
 
 ### How the SSR mode works?
 
-The current most common solution is to detect the device type of the user based on the user agent. (server-side).
-
-Based based on the device type, we decided how many items we are showing in the Carousel.
-
-For example, we want to show 3 items at the same time on desktop (screen size 1024 - 2000px possibily) and 2 items on tablet(700px - 1024px) and 1 item on mobile. ---> this can be achieved through user-agent detection.
-
 Codes for SSR at [github](https://github.com/YIZHUANG/react-multi-carousel/blob/master/examples/ssr/pages/index.js).
 
 - Demo for the SSR are at [here](https://react-multi-carousel.now.sh/)
@@ -92,7 +111,7 @@ Codes for SSR at [github](https://github.com/YIZHUANG/react-multi-carousel/blob/
 
 Here is a lighter version of the library for detecting the user's device type [alternative](https://github.com/faisalman/ua-parser-js)
 
-If you are using Nextjs, you can choose to only bundle it on the server-side to improve performance, if you are interested in how, open up an issue.
+If you are using Nextjs, you can choose to only bundle it on the server-side.
 
 ## Common Usage
 
@@ -103,16 +122,19 @@ import "react-multi-carousel/lib/styles.css";
 const responsive = {
   desktop: {
     breakpoint: { max: 3000, min: 1024 },
-    items: 3
+    items: 3,
+    slidesToSlide: 3, // optional, default to 1.
   },
   tablet: {
     breakpoint: { max: 1024, min: 464 },
-    items: 2
+    items: 2,
+    slidesToSlide: 2, // optional, default to 1.
   },
   mobile: {
     breakpoint: { max: 464, min: 0 },
-    items: 1
-  }
+    items: 1,
+    slidesToSlide: 1, // optional, default to 1.
+  },
 };
 <Carousel
   swipeable={false}
@@ -120,7 +142,6 @@ const responsive = {
   showDots={true}
   responsive={responsive}
   ssr={true} // means to render carousel on server-side.
-  slidesToSlide={2}
   infinite={true}
   autoPlay={this.props.deviceType !== "mobile" ? true : false}
   autoPlaySpeed={1000}
@@ -154,7 +175,7 @@ You custom arrows will receive a list of props/state that's passed back by the c
 const CustomRightArrow = ({ onClick, ...rest }) => {
   const {
     onMove,
-    state: { currentSlide, deviceType }
+    state: { currentSlide, deviceType },
   } = rest;
   // onMove means if dragging or swiping in progress.
   return <button onClick={() => onClick()} />;
@@ -388,7 +409,8 @@ For example if you give to your carousel item padding left and padding right 20p
 | keyBoardControl         |                                                                     `boolean`                                                                      |              `true`               | Use keyboard to navigate to next/previous slide                                                                                                                       |
 | autoPlay                |                                                                     `boolean`                                                                      |              `false`              | Auto play                                                                                                                                                             |
 | autoPlaySpeed           |                                                                      `number`                                                                      |               3000                | The unit is ms                                                                                                                                                        |
-| showDots                |                                                                     `boolean`                                                                      |              `false`              | Hide the default dot list                                                                                                                                             |
+| showDots                |                                                                     `boolean`                                                                      |              `false`              | Hide the default dot list                |
+| renderDotsOutside                |                                                                     `boolean`                                                                      |              `false`              | Show dots outside of the container                                                                                                                                     |
 | partialVisbile          |                                                                 `boolean | string`                                                                 |              `false`              | Show partial next slides. This is use with the `responsive` prop, see example for details                                                                             |
 | customTransition        |                                                                      `string`                                                                      |   `transform 300ms ease-in-out`   | Configure your own anaimation when sliding                                                                                                                            |
 | transitionDuration      | `number |`300` | The unit is ms, if you are using customTransition, make sure to put the duration here as this is needed for the resizing to work. |
@@ -396,7 +418,13 @@ For example if you give to your carousel item padding left and padding right 20p
 | centerMode              |                                      `boolean |`false` | Shows the next items and previous items paritially.                                       |
 | additionalTransfrom     |                                              `number |`0` | additional transfrom to the current one.                                               |
 
-## Contribute
+## Author
+
+👤 **Yi Zhuang**
+
+- Github: [@YIZHUANG](https://github.com/YIZHUANG)
+
+## 🤝 Contribute
 
 Please read https://github.com/YIZHUANG/react-multi-carousel/blob/master/contributing.md
 
@@ -414,6 +442,6 @@ If this project help you reduce time to develop, you can give me a cup of coffee
 
 [![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=GJSPRG9RKSJLQ&source=url)
 
-
 ## License
+
 [![FOSSA Status](https://app.fossa.io/api/projects/git%2Bgithub.com%2FYIZHUANG%2Freact-multi-carousel.svg?type=large)](https://app.fossa.io/projects/git%2Bgithub.com%2FYIZHUANG%2Freact-multi-carousel?ref=badge_large)
